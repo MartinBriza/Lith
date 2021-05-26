@@ -61,7 +61,7 @@ TextField {
     }
 
     function autocomplete() {
-        // console.log("BEFORE matchedNicks = ", matchedNicks, "LAST=", lastCursorPos, "NOW=", cursorPosition);
+        console.log("BEFORE matchedNicks = ", matchedNicks, "LAST=", lastCursorPos, "NOW=", cursorPosition);
 
         if(matchedNickIndex > matchedNicks.length-1) {
             matchedNickIndex = 0;
@@ -69,6 +69,19 @@ TextField {
 
         if(matchedNicks.length > 1) {
             if(lastCursorPos == cursorPosition) {
+                /*inputField.text = inputField.text.substring(0,
+                                                            (inputField.text.length) -
+                                                            (matchedNicks[matchedNickIndex == 0 ? matchedNicks.length-1 : matchedNickIndex - 1].length) -
+                                                            (inputField.text.endsWith(": ") ? 2 : 1)
+                                                            )*/
+
+                var bla =  inputField.text.substring(0,
+                                                     (inputField.text.length) -
+                                                     (matchedNicks[matchedNickIndex == 0 ? matchedNicks.length-1 : matchedNickIndex - 1].length) -
+                                                     (inputField.text.endsWith(": ") ? 2 : 1)
+                                                     );
+                console.log("Bla = ", bla);
+
                 inputField.text = inputField.text.substring(0,
                                                             (inputField.text.length) -
                                                             (matchedNicks[matchedNickIndex == 0 ? matchedNicks.length-1 : matchedNickIndex - 1].length) -
@@ -86,7 +99,7 @@ TextField {
                 return;
             }
             else {
-                // console.warn("ende.")
+                console.warn("ende.")
                 matchedNicks = []
                 matchedNickIndex = 0
                 lastCursorPos = 0
@@ -94,10 +107,31 @@ TextField {
         }
 
         // TODO: refactor this, I want cursorPosition tabbing still :)
-        var i = inputField.text.lastIndexOf(" ");
+
+        //var i = inputField.text.lastIndexOf(" ");
+        var i = -1; // This is the starting position if the message is empty
+
+        // Like indexOf, but let's go backwards from the current curpos
+        for(var x = cursorPosition - 1; x >= 0; x--)
+        {
+            if(inputField.text.charAt(x) == " ")
+            {
+                i = x;
+                break;
+            }
+        }
+
+        //var i = inputField.text.indexOf(" ", cursorPosition);
+        console.log("TEST i = ", i);
+        console.log("TEST x = ", x);
         var lastWord
         if (i >= 0)
-            lastWord = inputField.text.substring(i+1, inputField.text.length).trim().toLocaleLowerCase();
+        {
+            //lastWord = inputField.text.substring(i+1, inputField.text.length).trim().toLocaleLowerCase();
+            lastWord = inputField.text.substring(i+1, cursorPosition).trim().toLocaleLowerCase();
+
+            console.log("lastWord = ", lastWord);
+        }
         else {
             i = 0
             lastWord = inputField.text.trim().toLocaleLowerCase()
@@ -108,13 +142,18 @@ TextField {
         for (var y = 0; y < nicks.length; y++) {
             // console.warn("\"" + lastWord + "\" " + nicks[y])
             if (nicks[y].toLocaleLowerCase().startsWith(lastWord) && lastWord !== "") {
-                inputField.text = inputField.text.substring(0, i)
-                if (i !== 0) {
-                    inputField.text += " "
-                    inputField.text += nicks[y] + " "
-                }
-                else {
-                    inputField.text += nicks[y] + ": "
+                if(matchedNicks.length < 1)
+                {
+                    var tmp = inputField.text.substring(0, i)
+
+                    if (i !== 0) {
+                        tmp += " "
+                        tmp += nicks[y] + " "
+                    }
+                    else {
+                        tmp += nicks[y] + ": "
+                    }
+                    inputField.text = tmp + inputField.text.substring(i + lastWord.length + 1, inputField.text.length)
                 }
 
                 matchedNicks.push(nicks[y])
