@@ -75,26 +75,30 @@ TextField {
                                                             (inputField.text.endsWith(": ") ? 2 : 1)
                                                             )*/
 
-                var bla =  inputField.text.substring(0,
-                                                     (inputField.text.length) -
-                                                     (matchedNicks[matchedNickIndex == 0 ? matchedNicks.length-1 : matchedNickIndex - 1].length) -
-                                                     (inputField.text.endsWith(": ") ? 2 : 1)
-                                                     );
-                console.log("Bla = ", bla);
+                var prevNick = matchedNicks[matchedNickIndex == 0 ? matchedNicks.length - 1 : matchedNickIndex - 1];
+                console.log("prevNick =", prevNick);
+                var tmp_msg_str_before_nick = inputField.text.substring(0, cursorPosition - prevNick.length);
+                console.log("0, ", cursorPosition - prevNick.length);
+                var tmp_msg_str_after_nick = inputField.text.substring(cursorPosition, inputField.text.length);
 
-                inputField.text = inputField.text.substring(0,
+                //console.log("Bla = ", bla);
+
+                /*inputField.text = inputField.text.substring(0,
                                                             (inputField.text.length) -
                                                             (matchedNicks[matchedNickIndex == 0 ? matchedNicks.length-1 : matchedNickIndex - 1].length) -
                                                             (inputField.text.endsWith(": ") ? 2 : 1)
-                                                            )
-
-                inputField.text += matchedNicks[matchedNickIndex]
+                                                            )*/
+                inputField.text = ""
+                inputField.text += tmp_msg_str_before_nick
+                inputField.text += matchedNicks[matchedNickIndex] + " "
+                inputField.text += tmp_msg_str_after_nick
 
                 // This needs to be on a seperate line as we are working based of the current cursor position AFTER adding the nickname, ugh
-                inputField.text += cursorPosition - matchedNicks[matchedNickIndex].length === 0 ? ": " : " "
+                //inputField.text += cursorPosition - matchedNicks[matchedNickIndex].length === 0 ? ": " : " "
 
                 matchedNickIndex += 1
 
+                cursorPosition = cursorPosition - matchedNicks[matchedNickIndex]
                 lastCursorPos = cursorPosition
                 return;
             }
@@ -106,13 +110,10 @@ TextField {
             }
         }
 
-        // TODO: refactor this, I want cursorPosition tabbing still :)
-
-        //var i = inputField.text.lastIndexOf(" ");
         var i = -1; // This is the starting position if the message is empty
 
         // Like indexOf, but let's go backwards from the current curpos
-        for(var x = cursorPosition - 1; x >= 0; x--)
+        for(var x = cursorPosition - 1; x >= 0; x--) // TODO: ACcurate????
         {
             if(inputField.text.charAt(x) == " ")
             {
@@ -122,11 +123,8 @@ TextField {
         }
 
         //var i = inputField.text.indexOf(" ", cursorPosition);
-        console.log("TEST i = ", i);
-        console.log("TEST x = ", x);
         var lastWord
-        if (i >= 0)
-        {
+        if (i >= 0) {
             //lastWord = inputField.text.substring(i+1, inputField.text.length).trim().toLocaleLowerCase();
             lastWord = inputField.text.substring(i+1, cursorPosition).trim().toLocaleLowerCase();
 
@@ -142,26 +140,39 @@ TextField {
         for (var y = 0; y < nicks.length; y++) {
             // console.warn("\"" + lastWord + "\" " + nicks[y])
             if (nicks[y].toLocaleLowerCase().startsWith(lastWord) && lastWord !== "") {
-                if(matchedNicks.length < 1)
+                if(matchedNicks.length < 1) // We only want to add the first nick to the message for now
                 {
-                    var tmp = inputField.text.substring(0, i)
+                    var tmp_orig = inputField.text.substring(0, i)
+                    var tmp_to_add = ""; // Since we have sometimes have ": " and " ", let's store it seperately for the cursorPosition hack
 
                     if (i !== 0) {
-                        tmp += " "
-                        tmp += nicks[y] + " "
+                        tmp_to_add += " "
+                        tmp_to_add += nicks[y] + " "
                     }
                     else {
-                        tmp += nicks[y] + ": "
+                        //tmp_to_add += nicks[y] + ": "
+                        // TODO: JUST FOR TESTING, REMOVE ME
+                        tmp_to_add += " "
+                        tmp_to_add += nicks[y] + " "
                     }
-                    inputField.text = tmp + inputField.text.substring(i + lastWord.length + 1, inputField.text.length)
+
+                    // Add the text before the tabbed "lastWord", then add the nickname and finally add the text that was there after the tabbed "lastWord"
+                    inputField.text = tmp_orig + tmp_to_add + inputField.text.substring(i + lastWord.length + 1, inputField.text.length)
+
+                    // Hack back the cursorPosition since we used inputField.text = which messed it up to the end
+                    cursorPosition = i + tmp_to_add.length
                 }
 
-                matchedNicks.push(nicks[y])
+                matchedNicks.push(nicks[y]) // But add all of them to the list to be used when Tab is used again
             }
         }
 
         if (matchedNicks.length == 1) {
             matchedNicks = []; // Reset matchedNicks if there's just one match
+        }
+        else
+        {
+            matchedNickIndex += 1; // We need to add + 1 to the index, since we already matched the first one (0) here ^
         }
 
         lastCursorPos = cursorPosition
